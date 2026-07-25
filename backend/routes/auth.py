@@ -10,6 +10,7 @@ from db.database import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
 @router.post("/login")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],

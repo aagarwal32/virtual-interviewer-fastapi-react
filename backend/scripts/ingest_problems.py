@@ -4,7 +4,11 @@ populates it through ingest_entries via the InitDatabaseIngest instance.
 '''
 import json
 from pathlib import Path
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
+from models.problem import Problem, Tag, TestCase, Difficulty
+from db.database import get_db
 
 '''
 InitDatabaseIngest is called only once to populate database with
@@ -18,29 +22,36 @@ class InitDatabaseIngest:
 
 
     # reads and processes problem rows line by line for proper database ingestion
-    def ingest_entries(self) -> None:
+    def ingest_entries(self, db: Session = Depends(get_db)) -> None:
         entries = self.__create_list_of_dicts()
         failed = []
 
         # handle each problem entry
         for i, entry in enumerate(entries):
             try:
-                # TODO: instantiate problem, add to db, flush
-                current_problem = None # replace with the created Problem object
+                current_problem = Problem()
+                db.add(current_problem)
 
                 # handle each key-value to build
                 # Tag, Problem, and TestCase tables
                 for key, value in entry.items():
+                    if key == 'task_id' and isinstance(value, str):
+                        current_problem.task_id = value
+                    if key == 'question_id' and isinstance(value, int):
+                        current_problem.question_id = value
+                    if key == 'difficulty' and isinstance(value, str):
+                        current_problem.difficulty = Difficulty(value)
                     if key == 'tags' and isinstance(value, list):
-                        self.__process_tags(value, current_problem)
+                        self.__process_tags(db, current_problem, value)
                     
                     # TODO: process other key-values
 
-                # TODO: db commit once tag, problem, and testcase tables added
+                db.commit()
 
             except Exception as e:
                 identifier = entry.get("question_id", f'index {i}')
                 failed.append((identifier, str(e)))
+                db.rollback()
                 continue
         
         # summary of run and any failures
@@ -68,7 +79,7 @@ class InitDatabaseIngest:
     
 
     # prints first problem entry from source jsonl file cleanly on console 
-    def __print_entries(self) -> None:
+    def _print_entries(self) -> None:
         entries = self.__create_list_of_dicts()
         first_entry = entries[0]
         for key, value in first_entry.items():
@@ -85,28 +96,21 @@ class InitDatabaseIngest:
 
 
     # populates Tag table and establishes link between Tag <-> Problem
-    def __process_tags(self, tag_list: list[str], problem) -> None:
+    def __process_tags(self, db: Session, problem: Problem, tag_list: list[str]) -> None:
         for tag_name in tag_list:
-            # TODO: activate code below once db setup
-
-            # find existing tag by name, since the same tag name will be
             # shared across many problems (Tag.name is unique)
-            # tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            tag = db.query(Tag).filter(Tag.name == tag_name).first()
 
             # only create a new Tag row if one doesn't already exist
-            # if tag is None:
-            #     tag = Tag(name=tag_name)
-            #     db.add(tag)
-            #     db.flush()  # populates tag.id before it's used below
+            if tag is None:
+                tag = Tag(name=tag_name)
+                db.add(tag)
+                db.flush()
 
-            # link this problem and tag - now that we have the live Problem
-            # object (not just its id), this goes through the ORM
-            # relationship instead of a raw insert into problem_tags.
-            # SQLAlchemy handles the association-table row for us here.
-            # problem.tags.append(tag)
-            pass
+            problem.tags.append(tag)
+
+        
                     
-
 # TODO: execute create_tables() to instantiate database
 ingest = InitDatabaseIngest('leetcode_problem_list_2.jsonl', 'problem_lists')
-ingest.ingest_entries()
+ingest._print_entries()
