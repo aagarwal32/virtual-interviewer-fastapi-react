@@ -93,10 +93,8 @@ class TestCase(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     problem_id: Mapped[int] = mapped_column(ForeignKey("problems.id"), index=True)
 
-    input: Mapped[str] = mapped_column(Text)
-    expected_output: Mapped[str] = mapped_column(Text)
-
-    # ready-to-run assert statement for this case
+    # ready-to-run assert statement for this case -- also the display source
+    # for both the sample examples and "here's what you got wrong" output
     assertion_code: Mapped[str] = mapped_column(Text)
 
     # true for the first 3 sample cases shown to the user. False for hidden cases

@@ -41,6 +41,37 @@ BIGO_FIXES = {
     "n2": "n^2",
 }
 
+# task_id is a hyphenated slug (e.g. "two-sum") used to derive a human-readable
+# title ("Two Sum") by replacing hyphens with spaces and capitalizing each word.
+# These words are genuine acronyms/initialisms that should render fully
+# uppercase instead -- plain word-capitalization would otherwise give "Xor"
+# instead of "XOR", "Bst" instead of "BST", etc. Found by scanning every
+# distinct word across all task_ids in both problem_lists JSONL files.
+TITLE_WORD_OVERRIDES = {
+    "xor": "XOR",
+    "bst": "BST",
+    "bsts": "BSTS",
+    "gcd": "GCD",
+    "gcds": "GCDS",
+    "ip": "IP",
+    "lcm": "LCM",
+    "dfs": "DFS",
+    "dna": "DNA",
+    "utf": "UTF",
+    "ipo": "IPO",
+    "rgb": "RGB",
+    "html": "HTML",
+    "lcp": "LCP",
+    "cpu": "CPU",
+}
+
+# task_ids that don't split cleanly into words at all (no hyphen boundary to
+# work with), so no per-word casing rule can fix them -- these need the whole
+# title given as a literal override instead.
+TASK_ID_OVERRIDES = {
+    "sqrtx": "Sqrt(x)",
+}
+
 # Reviewed and deliberately left out of SUPERSCRIPT_FIXES above -- each of
 # these is either a common legitimate literal in this dataset (confirmed by
 # sampling actual context lines), or too rare/ambiguous to fix confidently.
