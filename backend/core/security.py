@@ -17,7 +17,7 @@ DUMMY_HASH = password_hash.hash("dummy-password-for-timing-safety")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-# password hashing
+# password verification & hashing
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_hash.verify(plain_password, hashed_password)
 
